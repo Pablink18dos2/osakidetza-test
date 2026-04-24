@@ -108,10 +108,15 @@ function renderStats() {
 // ── Dark mode ──────────────────────────────────────────────────────────────
 
 function initDarkMode() {
-  if (localStorage.getItem(LS_DARK) === '1') {
+  const saved  = localStorage.getItem(LS_DARK);
+  const isDark = saved === null ? true : saved === '1';   // dark por defecto
+  if (isDark) {
     document.documentElement.classList.add('dark');
     $('btn-dark').textContent = '☀️';
+  } else {
+    $('btn-dark').textContent = '🌙';
   }
+  if (saved === null) localStorage.setItem(LS_DARK, '1');
 }
 
 $('btn-dark').addEventListener('click', () => {
@@ -399,12 +404,18 @@ $('btn-next').addEventListener('click', () => {
 // ── Resumen ────────────────────────────────────────────────────────────────
 
 function showSummary() {
-  const total      = state.questions.length;
-  const pct        = Math.round((state.correct / total) * 100);
+  const total = state.questions.length;
+  const pct   = Math.round((state.correct / total) * 100);
   saveMeta(pct);
 
   $('score-pct').textContent    = pct + '%';
   $('score-detail').textContent = `${state.correct} correctas de ${total} preguntas`;
+
+  // GIF aleatorio
+  const n = Math.floor(Math.random() * 5) + 1;
+  $('gif-container').innerHTML =
+    `<img src="Images/gif_fin_test/${n}gifEnf.gif" class="result-gif" alt="¡Ánimo!" />`;
+
   showScreen('summary');
 }
 
@@ -425,6 +436,35 @@ $('btn-home').addEventListener('click', () => {
   });
   updateStartBtn();
   showScreen('start');
+});
+
+// ── Salir del test ─────────────────────────────────────────────────────────
+
+$('btn-exit-quiz').addEventListener('click', () => {
+  if (!confirm('¿Salir del test? Las preguntas ya respondidas quedan guardadas.')) return;
+  state.section = null;
+  state.qty     = null;
+  state.topN    = null;
+  ['section-picker', 'qty-picker', 'top-picker'].forEach(groupId => {
+    $(groupId).querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('selected'));
+  });
+  updateStartBtn();
+  showScreen('start');
+});
+
+// ── Reiniciar estadísticas ─────────────────────────────────────────────────
+
+$('btn-reset-stats').addEventListener('click', () => {
+  if (!confirm('¿Seguro que quieres borrar todas las estadísticas?\nEsta acción no se puede deshacer.')) return;
+  if (!confirm('Segunda confirmación: ¿borrar definitivamente todos los datos guardados?')) return;
+
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k.startsWith(LS_Q) || k === LS_META) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  renderStats();
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────

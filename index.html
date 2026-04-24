@@ -4,22 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Test Osakidetza — Enfermería OPE 23-24-25</title>
+  <link rel="icon" type="image/png" href="Images/minilogo.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <!-- ── CABECERA ───────────────────────────────────────── -->
 <header class="app-header">
-  <span class="header-title">Test Osakidetza</span>
-  <button id="btn-dark" class="btn-icon" title="Cambiar tema">🌙</button>
+  <div class="header-left">
+    <img src="Images/minilogo.png" class="header-logo" alt="" />
+    <span class="header-title">Test Osakidetza</span>
+  </div>
+  <button id="btn-dark" class="btn-icon" title="Cambiar tema">☀️</button>
 </header>
 
 <div class="container">
 
   <!-- ── PANTALLA INICIO ──────────────────────────────── -->
   <div id="screen-start" class="screen active">
-    <h1 class="app-title">Test Osakidetza</h1>
-    <p class="app-subtitle">Enfermería · OPE 23-24-25</p>
+
+    <!-- Hero: título + enfermera -->
+    <div class="start-hero">
+      <div class="start-hero-text">
+        <h1 class="app-title">Test Osakidetza</h1>
+        <p class="app-subtitle">Enfermería · OPE 23-24-25</p>
+      </div>
+      <img src="Images/EnfermeLogo.png" class="nurse-logo" alt="Enfermera" />
+    </div>
 
     <!-- Estadísticas de progreso -->
     <div class="stats-block" id="stats-block" style="display:none">
@@ -64,10 +75,21 @@
       <button class="btn-toggle" data-value="50">Top 50</button>
     </div>
     <button id="btn-refuerzo" class="btn-refuerzo" disabled>Empezar refuerzo</button>
+
+    <!-- Reiniciar estadísticas -->
+    <div class="reset-stats-wrap">
+      <button id="btn-reset-stats" class="btn-reset">Reiniciar estadísticas</button>
+    </div>
+
   </div>
 
   <!-- ── PANTALLA TEST ────────────────────────────────── -->
   <div id="screen-quiz" class="screen">
+
+    <div class="quiz-topbar">
+      <button id="btn-exit-quiz" class="btn-exit">← Salir</button>
+    </div>
+
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progress-fill"></div>
     </div>
@@ -101,6 +123,7 @@
       <p class="score-label">de acierto (vs Osakidetza oficial)</p>
       <p class="score-detail" id="score-detail"></p>
     </div>
+    <div id="gif-container" class="gif-container"></div>
     <div class="summary-actions">
       <button id="btn-repeat" class="btn-secondary">Repetir este test</button>
       <button id="btn-home"   class="btn-primary">Volver al inicio</button>
