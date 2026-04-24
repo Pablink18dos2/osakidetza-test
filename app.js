@@ -181,16 +181,16 @@ function updateStartBtn() {
 function updateRefuerzoBtn() {
   if (!state.topN) { $('btn-refuerzo').disabled = true; return; }
 
-  // Contar preguntas con al menos 1 intento
-  let attempted = 0;
+  // Activar solo si hay preguntas con al menos 1 fallo
+  let hasFailed = false;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key.startsWith(LS_Q)) {
       const s = JSON.parse(localStorage.getItem(key));
-      if (s.attempts > 0) attempted++;
+      if (s.wrong > 0) { hasFailed = true; break; }
     }
   }
-  $('btn-refuerzo').disabled = attempted === 0;
+  $('btn-refuerzo').disabled = !hasFailed;
 }
 
 // ── Test normal ────────────────────────────────────────────────────────────
