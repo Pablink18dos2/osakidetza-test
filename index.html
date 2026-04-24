@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Osakidetza — Enfermería OPE 23-24-25</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="container">
+
+  <!-- ── PANTALLA INICIO ──────────────────────────────── -->
+  <div id="screen-start" class="screen active">
+    <h1 class="app-title">Test Osakidetza</h1>
+    <p class="app-subtitle">Enfermería · OPE 23-24-25</p>
+
+    <p class="section-label">Bloque de preguntas</p>
+    <div class="btn-group" id="section-picker">
+      <button class="btn-toggle" data-value="comun">Temario Común</button>
+      <button class="btn-toggle" data-value="especifico">Temario Específico</button>
+      <button class="btn-toggle" data-value="mixto">Mezclado</button>
+    </div>
+
+    <p class="section-label">Cantidad de preguntas</p>
+    <div class="btn-group" id="qty-picker">
+      <button class="btn-toggle" data-value="20">20</button>
+      <button class="btn-toggle" data-value="50">50</button>
+      <button class="btn-toggle" data-value="100">100</button>
+      <button class="btn-toggle" data-value="all">Todas</button>
+    </div>
+
+    <button id="btn-start" class="btn-primary" disabled>Empezar test</button>
+  </div>
+
+  <!-- ── PANTALLA TEST ────────────────────────────────── -->
+  <div id="screen-quiz" class="screen">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <p class="progress-label" id="progress-label"></p>
+
+    <div class="question-card">
+      <p class="question-number" id="question-number"></p>
+      <p class="question-text" id="question-text"></p>
+      <div id="disputed-badge" class="disputed-badge" style="display:none">⚠️ Pregunta impugnada</div>
+    </div>
+
+    <ul class="options-list" id="options-list"></ul>
+
+    <div class="reveal-panel" id="reveal-panel">
+      <p class="reveal-title">Respuestas por fuente</p>
+      <div class="sources-grid" id="sources-grid"></div>
+      <div class="discrepancy-banner" id="discrepancy-banner" style="display:none">
+        ⚠️ Las fuentes no coinciden entre sí
+      </div>
+      <p class="note-text" id="note-text"></p>
+    </div>
+
+    <button id="btn-check" class="btn-primary">Comprobar</button>
+    <button id="btn-next"  class="btn-primary" style="display:none">Siguiente →</button>
+  </div>
+
+  <!-- ── PANTALLA RESUMEN ─────────────────────────────── -->
+  <div id="screen-summary" class="screen">
+    <div class="summary-card">
+      <div class="score-number" id="score-pct"></div>
+      <p class="score-label">de acierto (vs Osakidetza oficial)</p>
+      <p class="score-detail" id="score-detail"></p>
+    </div>
+    <div class="summary-actions">
+      <button id="btn-repeat" class="btn-secondary">Repetir este test</button>
+      <button id="btn-home"   class="btn-primary">Volver al inicio</button>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
