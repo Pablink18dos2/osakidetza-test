@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+<!-- ── CABECERA ───────────────────────────────────────── -->
+<header class="app-header">
+  <span class="header-title">Test Osakidetza</span>
+  <button id="btn-dark" class="btn-icon" title="Cambiar tema">🌙</button>
+</header>
+
 <div class="container">
 
   <!-- ── PANTALLA INICIO ──────────────────────────────── -->
@@ -14,6 +21,23 @@
     <h1 class="app-title">Test Osakidetza</h1>
     <p class="app-subtitle">Enfermería · OPE 23-24-25</p>
 
+    <!-- Estadísticas de progreso -->
+    <div class="stats-block" id="stats-block" style="display:none">
+      <div class="stat-chip">
+        <div class="stat-value" id="stat-cobertura">—</div>
+        <div class="stat-label">Practicadas</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-value" id="stat-acierto">—</div>
+        <div class="stat-label">% Acierto</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-value" id="stat-mejor">—</div>
+        <div class="stat-label">Mejor sesión</div>
+      </div>
+    </div>
+
+    <!-- Test normal -->
     <p class="section-label">Bloque de preguntas</p>
     <div class="btn-group" id="section-picker">
       <button class="btn-toggle" data-value="comun">Temario Común</button>
@@ -30,6 +54,16 @@
     </div>
 
     <button id="btn-start" class="btn-primary" disabled>Empezar test</button>
+
+    <!-- Refuerzo TOP fallos -->
+    <div class="refuerzo-divider">Refuerzo</div>
+    <p class="refuerzo-subtitle">Practica las preguntas que más fallas</p>
+    <div class="btn-group" id="top-picker">
+      <button class="btn-toggle" data-value="10">Top 10</button>
+      <button class="btn-toggle" data-value="20">Top 20</button>
+      <button class="btn-toggle" data-value="50">Top 50</button>
+    </div>
+    <button id="btn-refuerzo" class="btn-refuerzo" disabled>Empezar refuerzo</button>
   </div>
 
   <!-- ── PANTALLA TEST ────────────────────────────────── -->
@@ -74,6 +108,10 @@
   </div>
 
 </div>
+
+<!-- ── PIE DE PÁGINA ──────────────────────────────────── -->
+<footer class="app-footer">OPE 23-24-25 · Enfermería · Osakidetza</footer>
+
 <script src="app.js"></script>
 </body>
 </html>

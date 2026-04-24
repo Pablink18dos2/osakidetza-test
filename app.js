@@ -1,15 +1,23 @@
 'use strict';
 
+// ── Constantes ─────────────────────────────────────────────────────────────
+
+const TOTAL_QS   = 609;   // 174 comun + 435 especifico
+const LS_Q       = 'osk_q_';
+const LS_META    = 'osk_meta';
+const LS_DARK    = 'osk_dark';
+
 // ── State ──────────────────────────────────────────────────────────────────
 
 const state = {
-  questions: [],      // all questions in current test
-  index: 0,           // current question index
-  selected: null,     // selected option key ('a','b','c','d')
-  checked: false,     // has user clicked "Comprobar"?
-  correct: 0,         // correct answers so far
-  section: null,      // 'comun' | 'especifico' | 'mixto'
-  qty: null,          // number (or Infinity for all)
+  questions: [],
+  index:     0,
+  selected:  null,
+  checked:   false,
+  correct:   0,
+  section:   null,
+  qty:       null,
+  topN:      null,
   data: { comun: null, especifico: null },
 };
 
@@ -28,7 +36,89 @@ const screens = {
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
+  if (name === 'start') renderStats();
 }
+
+// ── localStorage: historial por pregunta ───────────────────────────────────
+
+function getQKey(section, id) {
+  return `${LS_Q}${section}_${id}`;
+}
+
+function getQStats(section, id) {
+  const raw = localStorage.getItem(getQKey(section, id));
+  return raw ? JSON.parse(raw) : { attempts: 0, wrong: 0 };
+}
+
+function saveQResult(section, id, isCorrect) {
+  const s = getQStats(section, id);
+  s.attempts++;
+  if (!isCorrect) s.wrong++;
+  localStorage.setItem(getQKey(section, id), JSON.stringify(s));
+}
+
+function getMeta() {
+  const raw = localStorage.getItem(LS_META);
+  return raw ? JSON.parse(raw) : { bestSession: 0 };
+}
+
+function saveMeta(sessionPct) {
+  const m = getMeta();
+  if (sessionPct > m.bestSession) {
+    m.bestSession = sessionPct;
+    localStorage.setItem(LS_META, JSON.stringify(m));
+  }
+}
+
+// ── Estadísticas de inicio ─────────────────────────────────────────────────
+
+function renderStats() {
+  let uniqueAnswered = 0;
+  let totalAttempts  = 0;
+  let totalWrong     = 0;
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key.startsWith(LS_Q)) continue;
+    const s = JSON.parse(localStorage.getItem(key));
+    if (s.attempts > 0) {
+      uniqueAnswered++;
+      totalAttempts += s.attempts;
+      totalWrong    += s.wrong;
+    }
+  }
+
+  if (uniqueAnswered === 0) {
+    $('stats-block').style.display = 'none';
+    return;
+  }
+
+  const aciertoPct = Math.round(((totalAttempts - totalWrong) / totalAttempts) * 100);
+  const meta       = getMeta();
+
+  $('stat-cobertura').textContent = `${uniqueAnswered} / ${TOTAL_QS}`;
+  $('stat-acierto').textContent   = `${aciertoPct}%`;
+  $('stat-mejor').textContent     = meta.bestSession > 0 ? `${meta.bestSession}%` : '—';
+  $('stats-block').style.display  = '';
+
+  // Actualizar estado del botón refuerzo
+  updateRefuerzoBtn();
+}
+
+// ── Dark mode ──────────────────────────────────────────────────────────────
+
+function initDarkMode() {
+  if (localStorage.getItem(LS_DARK) === '1') {
+    document.documentElement.classList.add('dark');
+    $('btn-dark').textContent = '☀️';
+  }
+}
+
+$('btn-dark').addEventListener('click', () => {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem(LS_DARK, isDark ? '1' : '0');
+  $('btn-dark').textContent = isDark ? '☀️' : '🌙';
+});
 
 // ── Data loading ───────────────────────────────────────────────────────────
 
@@ -36,8 +126,9 @@ async function loadData(section) {
   if (state.data[section]) return state.data[section];
   const res  = await fetch(`data/${section}.json`);
   const json = await res.json();
-  state.data[section] = json.questions;
-  return json.questions;
+  // Añadir _section a cada pregunta para poder guardar stats después
+  state.data[section] = json.questions.map(q => ({ ...q, _section: section }));
+  return state.data[section];
 }
 
 // ── Shuffle ────────────────────────────────────────────────────────────────
@@ -51,11 +142,12 @@ function shuffle(arr) {
   return a;
 }
 
-// ── Start screen ───────────────────────────────────────────────────────────
+// ── Start screen: pickers ─────────────────────────────────────────────────
 
 function initPickers() {
+  // Pickers de sección y cantidad (test normal)
   ['section-picker', 'qty-picker'].forEach(groupId => {
-    $( groupId).querySelectorAll('.btn-toggle').forEach(btn => {
+    $(groupId).querySelectorAll('.btn-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         $(groupId).querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
@@ -65,11 +157,38 @@ function initPickers() {
       });
     });
   });
+
+  // Picker de TOP fallos
+  $('top-picker').querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $('top-picker').querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.topN = parseInt(btn.dataset.value);
+      updateRefuerzoBtn();
+    });
+  });
 }
 
 function updateStartBtn() {
   $('btn-start').disabled = !(state.section && state.qty);
 }
+
+function updateRefuerzoBtn() {
+  if (!state.topN) { $('btn-refuerzo').disabled = true; return; }
+
+  // Contar preguntas con al menos 1 intento
+  let attempted = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(LS_Q)) {
+      const s = JSON.parse(localStorage.getItem(key));
+      if (s.attempts > 0) attempted++;
+    }
+  }
+  $('btn-refuerzo').disabled = attempted === 0;
+}
+
+// ── Test normal ────────────────────────────────────────────────────────────
 
 $('btn-start').addEventListener('click', startTest);
 
@@ -79,21 +198,72 @@ async function startTest() {
 
   let pool = [];
   if (state.section === 'comun' || state.section === 'mixto') {
-    const d = await loadData('comun');
-    pool = pool.concat(d);
+    pool = pool.concat(await loadData('comun'));
   }
   if (state.section === 'especifico' || state.section === 'mixto') {
-    const d = await loadData('especifico');
-    pool = pool.concat(d);
+    pool = pool.concat(await loadData('especifico'));
   }
 
-  const shuffled = shuffle(pool);
-  state.questions = state.qty === Infinity ? shuffled : shuffled.slice(0, state.qty);
-  state.index   = 0;
-  state.correct = 0;
+  const shuffled    = shuffle(pool);
+  state.questions   = state.qty === Infinity ? shuffled : shuffled.slice(0, state.qty);
+  state.index       = 0;
+  state.correct     = 0;
 
   $('btn-start').textContent = 'Empezar test';
-  $('btn-start').disabled = false;
+  $('btn-start').disabled    = !(state.section && state.qty);
+
+  showScreen('quiz');
+  renderQuestion();
+}
+
+// ── TOP fallos ─────────────────────────────────────────────────────────────
+
+$('btn-refuerzo').addEventListener('click', startTopFallos);
+
+async function startTopFallos() {
+  $('btn-refuerzo').disabled = true;
+  $('btn-refuerzo').textContent = 'Cargando…';
+
+  // Asegurar datos cargados
+  await Promise.all([loadData('comun'), loadData('especifico')]);
+
+  // Construir mapa id→question para búsqueda rápida
+  const qMap = {};
+  ['comun', 'especifico'].forEach(sec => {
+    state.data[sec].forEach(q => { qMap[`${sec}_${q.id}`] = q; });
+  });
+
+  // Recoger stats y calcular % fallo
+  const scored = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key.startsWith(LS_Q)) continue;
+    const s = JSON.parse(localStorage.getItem(key));
+    if (s.attempts === 0) continue;
+
+    const qid = key.slice(LS_Q.length);  // "comun_1" o "especifico_23"
+    const q   = qMap[qid];
+    if (!q) continue;
+
+    const failPct = (s.wrong / s.attempts) * 100;
+    if (failPct > 0) scored.push({ q, failPct });
+  }
+
+  // Ordenar por % fallo desc, tomar top N
+  scored.sort((a, b) => b.failPct - a.failPct);
+  const pool = scored.slice(0, state.topN).map(x => x.q);
+
+  $('btn-refuerzo').textContent = 'Empezar refuerzo';
+  $('btn-refuerzo').disabled    = false;
+
+  if (pool.length === 0) {
+    alert('Aún no tienes preguntas falladas guardadas. Haz primero algún test.');
+    return;
+  }
+
+  state.questions = shuffle(pool);
+  state.index     = 0;
+  state.correct   = 0;
 
   showScreen('quiz');
   renderQuestion();
@@ -106,57 +276,52 @@ function renderQuestion() {
   state.selected = null;
   state.checked  = false;
 
-  // Progress
+  // Progreso
   const pct = Math.round((state.index / state.questions.length) * 100);
-  $('progress-fill').style.width = pct + '%';
+  $('progress-fill').style.width  = pct + '%';
   $('progress-label').textContent = `${state.index + 1} / ${state.questions.length}`;
 
-  // Question header
+  // Pregunta
   $('question-number').textContent = `Pregunta ${q.id}`;
   $('question-text').textContent   = q.text;
-
-  // Disputed
   $('disputed-badge').style.display = q.disputed ? 'inline-flex' : 'none';
 
-  // Options
+  // Opciones
   const list = $('options-list');
   list.innerHTML = '';
-  const letters = ['a', 'b', 'c', 'd'];
-  letters.forEach(letter => {
+  ['a', 'b', 'c', 'd'].forEach(letter => {
     if (!q.options[letter]) return;
     const li  = document.createElement('li');
     const btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.dataset.letter = letter;
-    btn.innerHTML = `<span class="option-letter">${letter})</span> <span>${q.options[letter]}</span>`;
+    btn.className       = 'option-btn';
+    btn.dataset.letter  = letter;
+    btn.innerHTML       = `<span class="option-letter">${letter})</span> <span>${q.options[letter]}</span>`;
     btn.addEventListener('click', () => selectOption(letter));
     li.appendChild(btn);
     list.appendChild(li);
   });
 
-  // Reveal panel hidden
+  // Panel oculto
   $('reveal-panel').classList.remove('visible');
   $('discrepancy-banner').style.display = 'none';
   $('note-text').textContent = '';
 
-  // Buttons
+  // Botones
   $('btn-check').style.display = '';
-  $('btn-check').disabled = true;
+  $('btn-check').disabled      = true;
   $('btn-next').style.display  = 'none';
 }
 
 function selectOption(letter) {
   if (state.checked) return;
   state.selected = letter;
-
   $('options-list').querySelectorAll('.option-btn').forEach(btn => {
     btn.classList.toggle('selected', btn.dataset.letter === letter);
   });
-
   $('btn-check').disabled = false;
 }
 
-// ── Check answer ───────────────────────────────────────────────────────────
+// ── Comprobar ──────────────────────────────────────────────────────────────
 
 $('btn-check').addEventListener('click', checkAnswer);
 
@@ -171,22 +336,24 @@ function checkAnswer() {
 
   if (isCorrect) state.correct++;
 
-  // Colour options
+  // Guardar en historial
+  saveQResult(q._section, q.id, isCorrect);
+
+  // Colorear opciones
   $('options-list').querySelectorAll('.option-btn').forEach(btn => {
     const l = btn.dataset.letter;
     btn.disabled = true;
-    if (l === official)   btn.classList.add('revealed-correct');
+    if (l === official)              btn.classList.add('revealed-correct');
     if (l === userPicked && !isCorrect) btn.classList.add('incorrect');
   });
 
-  // Sources panel
-  renderSources(q, userPicked);
+  renderSources(q);
 
   $('btn-check').style.display = 'none';
   $('btn-next').style.display  = '';
 }
 
-function renderSources(q, userPicked) {
+function renderSources(q) {
   const official = q.answers.osakidetza;
 
   const sources = [
@@ -200,12 +367,10 @@ function renderSources(q, userPicked) {
   grid.innerHTML = '';
 
   sources.forEach(src => {
-    const ans = q.answers[src.key];
-    const row = document.createElement('div');
-    row.className = 'source-row' + (src.official ? ' official' : '');
-
+    const ans    = q.answers[src.key];
     const differs = ans && ans !== official;
-
+    const row    = document.createElement('div');
+    row.className = 'source-row' + (src.official ? ' official' : '');
     row.innerHTML = `
       <span class="source-name">
         ${src.label}
@@ -217,43 +382,35 @@ function renderSources(q, userPicked) {
     grid.appendChild(row);
   });
 
-  // Discrepancy banner
-  if (q.has_discrepancy) {
-    $('discrepancy-banner').style.display = '';
-  }
-
-  // Note
-  if (q.note) {
-    $('note-text').textContent = q.note;
-  }
+  if (q.has_discrepancy) $('discrepancy-banner').style.display = '';
+  if (q.note)            $('note-text').textContent = q.note;
 
   $('reveal-panel').classList.add('visible');
 }
 
-// ── Next / finish ──────────────────────────────────────────────────────────
+// ── Siguiente / fin ────────────────────────────────────────────────────────
 
 $('btn-next').addEventListener('click', () => {
   state.index++;
-  if (state.index >= state.questions.length) {
-    showSummary();
-  } else {
-    renderQuestion();
-  }
+  if (state.index >= state.questions.length) showSummary();
+  else renderQuestion();
 });
 
-// ── Summary ────────────────────────────────────────────────────────────────
+// ── Resumen ────────────────────────────────────────────────────────────────
 
 function showSummary() {
-  const total = state.questions.length;
-  const pct   = Math.round((state.correct / total) * 100);
+  const total      = state.questions.length;
+  const pct        = Math.round((state.correct / total) * 100);
+  saveMeta(pct);
+
   $('score-pct').textContent    = pct + '%';
   $('score-detail').textContent = `${state.correct} correctas de ${total} preguntas`;
   showScreen('summary');
 }
 
 $('btn-repeat').addEventListener('click', () => {
-  state.index   = 0;
-  state.correct = 0;
+  state.index     = 0;
+  state.correct   = 0;
   state.questions = shuffle(state.questions);
   showScreen('quiz');
   renderQuestion();
@@ -262,7 +419,8 @@ $('btn-repeat').addEventListener('click', () => {
 $('btn-home').addEventListener('click', () => {
   state.section = null;
   state.qty     = null;
-  ['section-picker', 'qty-picker'].forEach(groupId => {
+  state.topN    = null;
+  ['section-picker', 'qty-picker', 'top-picker'].forEach(groupId => {
     $(groupId).querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('selected'));
   });
   updateStartBtn();
@@ -271,4 +429,6 @@ $('btn-home').addEventListener('click', () => {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
+initDarkMode();
 initPickers();
+renderStats();
