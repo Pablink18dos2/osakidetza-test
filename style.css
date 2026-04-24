@@ -61,6 +61,7 @@ body {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   z-index: 10;
+  overflow: hidden;
   transition: background 0.2s, border-color 0.2s;
 }
 
@@ -68,11 +69,14 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .header-logo {
   height: 28px;
-  width: auto;
+  width: 28px;
+  object-fit: contain;
+  flex-shrink: 0;
   image-rendering: pixelated;
 }
 
@@ -122,20 +126,16 @@ body {
 /* ── Start screen ───────────────────── */
 
 .start-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 12px;
+  text-align: center;
+  margin-bottom: 28px;
 }
 
-.start-hero-text { flex: 1; }
-
 .nurse-logo {
-  height: 130px;
+  display: block;
+  height: 100px;
   width: auto;
+  margin: 10px auto 0;
   image-rendering: pixelated;
-  flex-shrink: 0;
 }
 
 .app-title {
@@ -250,22 +250,30 @@ body {
 
 .reset-stats-wrap {
   margin-top: 28px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
 }
 
 .btn-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
-  border: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 9px 16px;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 4px 8px;
-  opacity: 0.7;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.btn-reset:hover { opacity: 1; color: var(--red); }
+.btn-reset:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-bg);
+}
 
 /* ── Refuerzo section ───────────────── */
 
