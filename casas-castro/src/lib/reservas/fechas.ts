@@ -53,3 +53,16 @@ export function calcularExpiracion(desde: Date = new Date()): Date {
     desde.getTime() + reglasReserva.ventanaProvisionalHoras * 60 * 60 * 1000,
   );
 }
+
+/**
+ * Convierte "YYYY-MM-DD" en Date a medianoche UTC.
+ * Se usa UTC para tratar las fechas como "día natural" sin desfases de zona.
+ */
+export function parseFechaISO(s: string): Date {
+  return new Date(`${s}T00:00:00.000Z`);
+}
+
+/** Formatea un Date como "YYYY-MM-DD" (UTC). */
+export function formatFechaISO(fecha: Date): string {
+  return fecha.toISOString().slice(0, 10);
+}

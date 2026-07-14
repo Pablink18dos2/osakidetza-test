@@ -8,6 +8,7 @@ import { formatEuros } from "@/lib/format";
 import { Galeria } from "@/components/casas/Galeria";
 import { Mapa } from "@/components/casas/Mapa";
 import { ResenaCard } from "@/components/resenas/ResenaCard";
+import { ReservaWidget } from "@/components/reservas/ReservaWidget";
 
 // Genera las rutas estáticas de cada casa en build.
 export async function generateStaticParams() {
@@ -113,12 +114,14 @@ export default async function CasaPage(props: PageProps<"/casas/[slug]">) {
               Estancia mínima: {reglasReserva.minNoches} noches
             </p>
 
-            {/* TODO (fase reservas): calendario de disponibilidad con estados
-                libre / provisional / ocupado + formulario de solicitud. */}
-            <div className="mt-6 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted">
-              Calendario y formulario de reserva
-              <br />
-              (próxima fase)
+            <div className="mt-6">
+              <ReservaWidget
+                casaId={casa.id}
+                capacidad={casa.capacidad}
+                precioTemporadaBaja={casa.precioTemporadaBaja}
+                minNoches={reglasReserva.minNoches}
+                ventanaHoras={reglasReserva.ventanaProvisionalHoras}
+              />
             </div>
           </div>
         </aside>
