@@ -1,0 +1,81 @@
+// Esquema de datos — Web de alquiler de casas en Castro Urdiales
+//
+// Se usa SQLite en desarrollo para arrancar sin servicios externos.
+// El esquema está pensado para migrar a Postgres (Supabase) sin reescribir:
+//  - Los arrays (servicios, fotos) se guardan como Json (soportado en ambos).
+//  - Los "enums" se modelan como String + unión de tipos en TypeScript
+//    (src/types), porque SQLite no soporta enums nativos. En Postgres se
+//    puede convertir a enum real más adelante.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Casa {
+  id                  String    @id @default(uuid())
+  nombre              String
+  slug                String    @unique
+  direccion           String
+  lat                 Float?
+  lng                 Float?
+  descripcionCorta    String
+  descripcionLarga    String
+  capacidad           Int
+  habitaciones        Int
+  banos               Int
+  servicios           Json      // string[]  ej. ["wifi","parking","jardín"]
+  fotos               Json      // string[]  URLs de las imágenes
+  precioTemporadaBaja Int       // €/noche
+  precioTemporadaAlta Int?      // €/noche (opcional si no aplica)
+  temporadaAltaInicio DateTime? // opcional
+  temporadaAltaFin    DateTime? // opcional
+  orden               Int       @default(0)
+  creadoEn            DateTime  @default(now())
+  actualizadoEn       DateTime  @updatedAt
+
+  reservas Reserva[]
+  resenas  Resena[]
+}
+
+model Reserva {
+  id                String   @id @default(uuid())
+  casa              Casa     @relation(fields: [casaId], references: [id], onDelete: Cascade)
+  casaId            String
+  nombreCliente     String
+  emailCliente      String
+  telefonoCliente   String
+  numPersonas       Int
+  fechaInicio       DateTime
+  fechaFin          DateTime
+  // estado: "provisional" | "confirmada" | "rechazada" | "expirada" | "bloqueo"
+  //  - bloqueo = fechas bloqueadas manualmente por el propietario
+  estado            String   @default("provisional")
+  mensajeCliente    String?
+  motivoRechazo     String?
+  tokenConfirmacion String   @unique
+  expiraEn          DateTime? // creadoEn + 48h, solo relevante si provisional
+  creadoEn          DateTime  @default(now())
+  actualizadoEn     DateTime  @updatedAt
+
+  @@index([casaId, estado])
+  @@index([estado, expiraEn])
+}
+
+model Resena {
+  id           String   @id @default(uuid())
+  casa         Casa?    @relation(fields: [casaId], references: [id], onDelete: Cascade)
+  casaId       String?  // null = aplica a ambas casas
+  nombreAutor  String
+  texto        String
+  valoracion   Int      // 1-5
+  fecha        DateTime
+  destacada    Boolean  @default(false)
+  creadoEn     DateTime @default(now())
+
+  @@index([casaId])
+}

@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/*
+  Sistema de diseño — paleta costera y neutra.
+  Minimalista: fondos claros, azules apagados, acentos en madera/arena.
+  Los tokens se exponen a Tailwind vía @theme para usarlos como utilidades
+  (bg-brand, text-ink, etc.).
+*/
+
+@theme {
+  /* Neutros cálidos */
+  --color-canvas: #faf9f6; /* fondo general */
+  --color-surface: #ffffff; /* tarjetas */
+  --color-border: #e7e4dd;
+  --color-ink: #1f2a30; /* texto principal */
+  --color-muted: #5c6a72; /* texto secundario */
+
+  /* Azul costero (marca) */
+  --color-brand: #3f6f80;
+  --color-brand-dark: #2f5462;
+  --color-brand-soft: #e8f0f2;
+
+  /* Acento madera/arena */
+  --color-sand: #c9a880;
+
+  /* Estados del calendario */
+  --color-libre: #ffffff;
+  --color-provisional: #e9a23b; /* ámbar: en proceso de confirmación */
+  --color-ocupado: #b04a45; /* rojo apagado: confirmada/ocupada */
+
+  /* Feedback */
+  --color-ok: #3f8a5b;
+  --color-warn: #c47f24;
+  --color-error: #b04a45;
+
+  /* Tipografía */
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+
+  /* Radios */
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Utilidad de ancho de página coherente */
+@utility container-page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
