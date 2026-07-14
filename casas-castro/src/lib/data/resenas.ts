@@ -28,3 +28,11 @@ export async function getResenasDeCasa(casaId: string): Promise<ResenaDTO[]> {
     orderBy: { fecha: "desc" },
   });
 }
+
+/** Todas las reseñas con el nombre de la casa (para el admin). */
+export function listarResenas() {
+  return prisma.resena.findMany({
+    include: { casa: { select: { nombre: true } } },
+    orderBy: { fecha: "desc" },
+  });
+}

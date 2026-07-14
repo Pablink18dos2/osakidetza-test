@@ -1,8 +1,8 @@
 // Confirmación y rechazo de solicitudes por parte del propietario.
-// Se usa tanto desde los enlaces del email como (más adelante) desde el admin.
+// Se usa desde los enlaces del email (por token) y desde el admin (por id).
 
 import { prisma } from "@/lib/prisma";
-import { getReservaPorToken } from "@/lib/data/reservas";
+import { getReservaPorToken, getReservaPorId } from "@/lib/data/reservas";
 import { enviarEmail } from "@/lib/email";
 import {
   emailConfirmacionCliente,
@@ -32,10 +32,12 @@ function datosEmail(r: ReservaConCasa): DatosReservaEmail {
   };
 }
 
-export async function confirmarReserva(token: string): Promise<ResultadoGestion> {
-  const reserva = await getReservaPorToken(token);
-  if (!reserva) return { ok: false, error: "Solicitud no encontrada." };
+// --- Núcleo (opera sobre una reserva ya cargada) --------------------------
 
+async function aplicarConfirmacion(
+  reserva: ReservaConCasa | null,
+): Promise<ResultadoGestion> {
+  if (!reserva) return { ok: false, error: "Solicitud no encontrada." };
   if (reserva.estado === "confirmada") {
     return { ok: true, estado: "confirmada", nombreCasa: reserva.casa.nombre };
   }
@@ -63,13 +65,11 @@ export async function confirmarReserva(token: string): Promise<ResultadoGestion>
   return { ok: true, estado: "confirmada", nombreCasa: reserva.casa.nombre };
 }
 
-export async function rechazarReserva(
-  token: string,
+async function aplicarRechazo(
+  reserva: ReservaConCasa | null,
   motivo?: string,
 ): Promise<ResultadoGestion> {
-  const reserva = await getReservaPorToken(token);
   if (!reserva) return { ok: false, error: "Solicitud no encontrada." };
-
   if (reserva.estado === "rechazada") {
     return { ok: true, estado: "rechazada", nombreCasa: reserva.casa.nombre };
   }
@@ -95,4 +95,22 @@ export async function rechazarReserva(
   }
 
   return { ok: true, estado: "rechazada", nombreCasa: reserva.casa.nombre };
+}
+
+// --- Wrappers por token (emails) y por id (admin) -------------------------
+
+export async function confirmarReserva(token: string) {
+  return aplicarConfirmacion(await getReservaPorToken(token));
+}
+
+export async function rechazarReserva(token: string, motivo?: string) {
+  return aplicarRechazo(await getReservaPorToken(token), motivo);
+}
+
+export async function confirmarReservaId(id: string) {
+  return aplicarConfirmacion(await getReservaPorId(id));
+}
+
+export async function rechazarReservaId(id: string, motivo?: string) {
+  return aplicarRechazo(await getReservaPorId(id), motivo);
 }

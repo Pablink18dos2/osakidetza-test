@@ -82,14 +82,26 @@ Este repositorio es el **esqueleto**. Plan de construcción:
 
 1. ✅ **Estructura base** — Next.js + Prisma + modelo de datos + páginas
    públicas con datos de ejemplo + sistema de diseño.
-2. ⏳ **Flujo de reservas** — calendario con estados (libre / provisional /
+2. ✅ **Flujo de reservas** — calendario con estados (libre / provisional /
    ocupado), formulario, creación de solicitud provisional (48h), emails y
    rutas de confirmar/rechazar.
-3. ⏳ **Panel de administración** — login del propietario y gestión de
-   reservas, precios, fotos, disponibilidad y reseñas.
+3. ✅ **Panel de administración** — login del propietario y gestión de
+   reservas, bloqueo manual de fechas, precios, descripciones, fotos,
+   servicios y reseñas.
 4. ⏳ **Producción** — migración a Postgres/Supabase, fotos reales, textos
    legales definitivos y datos reales de las casas.
 
-Los puntos pendientes de datos reales están recogidos en el documento de plan
-original (sección 0: nombres, direcciones, precios, fotos, email del
-propietario, etc.).
+> ⚠️ El contenido actual (nombres, direcciones, precios, descripciones y
+> fotos) es **inventado** y debe sustituirse por el real. Los puntos
+> pendientes están en la sección 0 del documento de plan original.
+
+## Panel de administración
+
+Accede en `/admin` (redirige a `/admin/login`). La contraseña se define en
+`ADMIN_PASSWORD`. Desde el panel puedes:
+
+- **Reservas:** ver todas con filtros por casa/estado, confirmar o rechazar
+  solicitudes, eliminar y **bloquear fechas manualmente**.
+- **Casas:** editar nombre, descripciones, precios, capacidad, servicios y
+  la lista de fotos (una URL por línea).
+- **Reseñas:** añadir, eliminar y marcar como destacadas (aparecen en la Home).

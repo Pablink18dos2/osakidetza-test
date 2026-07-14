@@ -38,3 +38,26 @@ export function getReservaPorToken(token: string) {
     include: { casa: true },
   });
 }
+
+/** Busca una reserva por su id (para el panel de administración). */
+export function getReservaPorId(id: string) {
+  return prisma.reserva.findUnique({
+    where: { id },
+    include: { casa: true },
+  });
+}
+
+/** Lista de reservas para el admin, con filtros opcionales por casa y estado. */
+export function listarReservas(filtros: {
+  casaId?: string;
+  estado?: EstadoReserva;
+}) {
+  return prisma.reserva.findMany({
+    where: {
+      casaId: filtros.casaId || undefined,
+      estado: filtros.estado || undefined,
+    },
+    include: { casa: true },
+    orderBy: [{ estado: "asc" }, { fechaInicio: "asc" }],
+  });
+}
