@@ -11,32 +11,36 @@ online** (confirmación manual del propietario por email).
 ## Stack
 
 - **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
-- **Prisma** como ORM. **SQLite** en desarrollo; migrable a **Postgres/Supabase**
-  en producción sin reescribir el esquema.
+- **Prisma** como ORM sobre **PostgreSQL** (Neon/Supabase/Vercel Postgres).
 - **Resend** para emails (simulados por consola si no hay API key).
-- Pensado para desplegar en **Vercel** (incluye `vercel.json` con el cron).
+- Desplegable en **Vercel** (incluye `vercel.json` con el cron). Ver
+  **[DEPLOY.md](./DEPLOY.md)**.
 
 ## Puesta en marcha
+
+Necesitas una base de datos PostgreSQL (p. ej. una gratis en Neon o Supabase;
+en local también vale un Postgres por Docker).
 
 ```bash
 cd casas-castro
 npm install
-cp .env.example .env      # revisa/rellena los valores
-npm run db:push           # crea la base de datos SQLite
+cp .env.example .env      # pon tus DATABASE_URL y DIRECT_URL de Postgres
+npm run db:deploy         # aplica las migraciones (crea las tablas)
 npm run db:seed           # datos de ejemplo (2 casas + reseñas)
 npm run dev               # http://localhost:3000
 ```
 
 ### Scripts útiles
 
-| Script              | Qué hace                                          |
-| ------------------- | ------------------------------------------------- |
-| `npm run dev`       | Servidor de desarrollo                            |
-| `npm run build`     | Compila (genera cliente Prisma + build de Next)   |
-| `npm run db:push`   | Sincroniza el esquema con la base de datos        |
-| `npm run db:seed`   | Carga datos de ejemplo                            |
-| `npm run db:reset`  | Recrea la base de datos y vuelve a cargar el seed |
-| `npm run db:studio` | Explora la base de datos (Prisma Studio)          |
+| Script               | Qué hace                                              |
+| -------------------- | ---------------------------------------------------- |
+| `npm run dev`        | Servidor de desarrollo                               |
+| `npm run build`      | Compila (genera cliente Prisma + build de Next)      |
+| `npm run vercel-build` | Build de producción (migraciones + build)          |
+| `npm run db:migrate` | Crea/aplica una migración en desarrollo              |
+| `npm run db:deploy`  | Aplica migraciones pendientes (producción)           |
+| `npm run db:seed`    | Carga datos de ejemplo                               |
+| `npm run db:studio`  | Explora la base de datos (Prisma Studio)             |
 
 ## Estructura
 
@@ -88,8 +92,10 @@ Este repositorio es el **esqueleto**. Plan de construcción:
 3. ✅ **Panel de administración** — login del propietario y gestión de
    reservas, bloqueo manual de fechas, precios, descripciones, fotos,
    servicios y reseñas.
-4. ⏳ **Producción** — migración a Postgres/Supabase, fotos reales, textos
-   legales definitivos y datos reales de las casas.
+4. ✅ **Listo para producción** — PostgreSQL + migraciones Prisma +
+   `vercel-build`. Guía completa en **[DEPLOY.md](./DEPLOY.md)**. Pendiente
+   solo lo que depende de datos/servicios reales: fotos, textos legales
+   definitivos y los datos reales de las casas.
 
 > ⚠️ El contenido actual (nombres, direcciones, precios, descripciones y
 > fotos) es **inventado** y debe sustituirse por el real. Los puntos

@@ -10,10 +10,20 @@ import { Mapa } from "@/components/casas/Mapa";
 import { ResenaCard } from "@/components/resenas/ResenaCard";
 import { ReservaWidget } from "@/components/reservas/ReservaWidget";
 
-// Genera las rutas estáticas de cada casa en build.
+// Regenera la página como mucho cada 5 min (ISR), además de bajo demanda
+// cuando el admin edita una casa (revalidatePath).
+export const revalidate = 300;
+
+// Genera las rutas estáticas de cada casa en build. Resiliente: si la base de
+// datos aún no tiene casas (primer despliegue sin seed), no rompe el build;
+// las fichas se generan bajo demanda.
 export async function generateStaticParams() {
-  const slugs = await getSlugs();
-  return slugs.map((slug) => ({ slug }));
+  try {
+    const slugs = await getSlugs();
+    return slugs.map((slug) => ({ slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata(

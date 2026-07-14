@@ -1,19 +1,21 @@
 // Esquema de datos — Web de alquiler de casas en Castro Urdiales
 //
-// Se usa SQLite en desarrollo para arrancar sin servicios externos.
-// El esquema está pensado para migrar a Postgres (Supabase) sin reescribir:
-//  - Los arrays (servicios, fotos) se guardan como Json (soportado en ambos).
+// Base de datos: PostgreSQL (producción en Vercel + Neon/Supabase/Vercel Postgres).
+//  - Los arrays (servicios, fotos) se guardan como Json (jsonb en Postgres).
 //  - Los "enums" se modelan como String + unión de tipos en TypeScript
-//    (src/types), porque SQLite no soporta enums nativos. En Postgres se
-//    puede convertir a enum real más adelante.
+//    (src/types). Se pueden convertir a enum nativo de Postgres más adelante.
+//
+// url:       cadena de conexión "pooled" (PgBouncer) usada en runtime serverless.
+// directUrl: conexión directa usada por Prisma Migrate. En local, ambas iguales.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Casa {

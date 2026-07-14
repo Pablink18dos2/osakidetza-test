@@ -5,6 +5,10 @@ import { pueblo } from "@/content/pueblo";
 import { CasaCard } from "@/components/casas/CasaCard";
 import { ResenaCard } from "@/components/resenas/ResenaCard";
 
+// ISR: la Home se regenera como mucho cada 5 min (y bajo demanda cuando el
+// admin edita casas o reseñas mediante revalidatePath).
+export const revalidate = 300;
+
 export default async function HomePage() {
   const [casas, resenas] = await Promise.all([
     getCasas(),
